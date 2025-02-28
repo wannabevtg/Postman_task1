@@ -202,8 +202,4 @@ func main() {
 		}
 	}
 
-	for _, row_1 := range updated_rows {
-		fmt.Println(row_1)
-	}
-
 }

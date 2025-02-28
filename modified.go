@@ -13,31 +13,33 @@ import (
 )
 
 // Function to calculate average
-func average(rows [][]string, column string) (float64, error) {
+func average(rows [][]string, column string) (map[string]float64, error) {
 
 	var sum float64 = 0
 	var count int = 0
 	col_no, err := excelize.ColumnNameToNumber(column)
 	if err != nil {
-		return 0, err
+		log.Fatal(err)
 	}
 
 	for i, row := range rows {
 		if i == 0 {
 			continue
 		}
-		cell := row[col_no-1]
+		cell := row[col_no]
 		value, err := strconv.ParseFloat(cell, 64)
 		if err != nil {
-			return 0, err
+			log.Fatal(err)
 		}
 		sum += value
 		count++
 	}
 	if count == 0 {
-		return 0, fmt.Errorf("no data found in column")
+		return nil, fmt.Errorf("no data found in column")
 	}
-	return sum / float64(count), nil
+	averages := make(map[string]float64)
+	averages[rows[0][col_no]] = sum / float64(count)
+	return averages, nil
 }
 
 // Function to calculate branchwise average
@@ -45,18 +47,18 @@ func branchwise_average(rows [][]string, column string, branch_column string) (m
 
 	// Initialize branch maps
 	br_maps := map[string]int{
-		"2024A1PS": 0, "2024A2PS": 0, "2024A3PS": 0, "2024A4PS": 0,
-		"2024A5PS": 0, "2024A6PS": 0, "2024A7PS": 0, "2024A8PS": 0,
+		"2024A3PS": 0, "2024A4PS": 0,
+		"2024A5PS": 0, "2024A7PS": 0, "2024A8PS": 0,
 		"2024ADPS": 0, "2024AAPS": 0,
 	}
 	br_maps_m := map[string]float64{
-		"2024A1PS": 0.0, "2024A2PS": 0.0, "2024A3PS": 0.0, "2024A4PS": 0.0,
-		"2024A5PS": 0.0, "2024A6PS": 0.0, "2024A7PS": 0.0, "2024A8PS": 0.0,
+		"2024A3PS": 0.0, "2024A4PS": 0.0,
+		"2024A5PS": 0.0, "2024A7PS": 0.0, "2024A8PS": 0.0,
 		"2024ADPS": 0.0, "2024AAPS": 0.0,
 	}
 	br_max := map[string]float64{
-		"2024A1PS": 0.0, "2024A2PS": 0.0, "2024A3PS": 0.0, "2024A4PS": 0.0,
-		"2024A5PS": 0.0, "2024A6PS": 0.0, "2024A7PS": 0.0, "2024A8PS": 0.0,
+		"2024A3PS": 0.0, "2024A4PS": 0.0,
+		"2024A5PS": 0.0, "2024A7PS": 0.0, "2024A8PS": 0.0,
 		"2024ADPS": 0.0, "2024AAPS": 0.0,
 	}
 
@@ -98,15 +100,19 @@ func branchwise_average(rows [][]string, column string, branch_column string) (m
 }
 
 func main() {
-	var class = flag.Int("CLASS_NO", 0, "Enter the class number:")
-	class_1 := (int64)(*class)
+
+	class := flag.Int64("class", 0, "Enter the class number:")
+	flag.Parse()
+	fmt.Println(*class)
+	fmt.Println("Arguments received:", os.Args)
+
 	if len(os.Args) < 2 {
-		fmt.Println("it takes 2 arguments C:/Users/vivek/Downloads/CSF111_202425_01_GradeBook_stripped.xlsx")
+		fmt.Println("filepath missing: C:/Users/vivek/Downloads/CSF111_202425_01_GradeBook_stripped.xlsx")
 		return
 	}
 
 	// Get the file path from the command-line argument
-	filepath := os.Args[1]
+	filepath := os.Args[2]
 
 	f, err := excelize.OpenFile(filepath)
 	if err != nil {
@@ -115,6 +121,9 @@ func main() {
 	sheetNames := f.GetSheetList()
 	// Call branchwise_average
 	rows, err := f.GetRows(sheetNames[0])
+	if err != nil {
+		log.Fatal(err)
+	}
 	var updated_rows [][]string
 	for i, row := range rows {
 
@@ -150,10 +159,12 @@ func main() {
 
 		}
 		class_check, err := strconv.ParseInt(row[1], 10, 64)
+
 		if err != nil {
 			log.Fatal(err)
 		}
-		if class_1 == 0 || class_check == class_1 {
+
+		if *class == 0 || *class == class_check {
 			updated_rows = append(updated_rows, row)
 		}
 	}
@@ -201,5 +212,23 @@ func main() {
 			fmt.Println(key_1, " ", brwise_max_quiz[key_1])
 		}
 	}
+	for k := 0; k < 7; k++ {
 
+		column_no, err := excelize.ColumnNumberToName(k + 4)
+		if err != nil {
+			log.Fatal(err)
+		}
+		average_quiz, err := average(updated_rows, column_no)
+		if err != nil {
+			log.Fatal(err)
+		}
+		for avg := range average_quiz {
+			fmt.Println(avg, " ", average_quiz[avg])
+
+		}
+		// for _, row_1 := range updated_rows {
+		// 	fmt.Println(row_1)
+		// }
+
+	}
 }

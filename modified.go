@@ -187,7 +187,7 @@ func main() {
 		sort.Slice(keys, func(i, j int) bool {
 			return connect[keys[i]] > connect[keys[j]]
 		})
-		fmt.Println(updated_rows[0][r+4])
+		fmt.Println(updated_rows[0][r+4], "  ", updated_rows[0][2])
 		for y := 0; y < 3; y++ {
 			fmt.Println("Rank", " ", y+1, " ", keys[y], "  ", connect[keys[y]])
 		}
